@@ -1,8 +1,8 @@
 # blu
 
-A tiny command-line Bluetooth Low Energy (BLE) scanner for macOS. It continuously
-scans for nearby BLE devices and shows them in a live-updating table sorted by
-signal strength.
+A tiny command-line Bluetooth Low Energy (BLE) scanner for macOS and Windows.
+It continuously scans for nearby BLE devices and shows them in a live-updating
+table sorted by signal strength.
 
 ```
 Device Name                    | Address                              | Signal (RSSI)
@@ -16,11 +16,24 @@ Unknown Device                 | 5D41402A-...                         | -67 dBm
 The script manages its own dependencies via [uv](https://docs.astral.sh/uv/) —
 no virtualenv or pip needed.
 
+### macOS
+
 ```sh
 brew install uv
 git clone https://github.com/Aiz-en/blu.git
 ln -s "$PWD/blu/Blu.py" /opt/homebrew/bin/blu
 ```
+
+### Windows
+
+Run in PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/Aiz-en/blu/main/install.ps1 | iex
+```
+
+This installs uv if it's missing, puts blu in `%LOCALAPPDATA%\Programs\blu`,
+and adds a `blu` command to your PATH (open a new terminal afterwards).
 
 ## Usage
 
@@ -34,4 +47,5 @@ Press `Ctrl+C` to stop.
 
 Note: on macOS, addresses are per-device UUIDs assigned by CoreBluetooth, not
 real MAC addresses, and they can change between runs. The first run may ask for
-permission to use Bluetooth — that's expected.
+permission to use Bluetooth — that's expected. On Windows, addresses are the
+devices' actual MAC addresses.

@@ -6,9 +6,23 @@
 
 import argparse
 import asyncio
+import sys
 from bleak import BleakScanner
 
 CLEAR_SCREEN = "\033[H\033[J"  # move cursor home + clear from cursor down
+
+def enable_ansi():
+    # Legacy Windows consoles (cmd/conhost) ignore ANSI codes unless
+    # virtual terminal processing is switched on for the session.
+    if sys.platform != "win32":
+        return
+    import ctypes
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.GetStdHandle(-11)  # STD_OUTPUT_HANDLE
+    mode = ctypes.c_uint32()
+    if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+        ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+        kernel32.SetConsoleMode(handle, mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
 
 async def run_scanner(interval: float, name_filter: str | None):
     print("Starting BLE scanner — press Ctrl+C to stop...")
@@ -55,6 +69,7 @@ def main():
                          help="Only show devices whose name contains this substring")
     args = parser.parse_args()
 
+    enable_ansi()
     show_menu()
     try:
         asyncio.run(run_scanner(args.interval, args.filter))
