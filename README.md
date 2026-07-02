@@ -18,7 +18,7 @@ no virtualenv or pip needed.
 
 ```sh
 brew install uv
-git clone https://github.com/OWNER/blu.git
+git clone https://github.com/Aiz-en/blu.git
 ln -s "$PWD/blu/Blu.py" /opt/homebrew/bin/blu
 ```
 
