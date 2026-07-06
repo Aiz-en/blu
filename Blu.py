@@ -53,6 +53,32 @@ def resolve_name(device, adv_data):
 
     return "Unknown Device"
 
+# Log-distance path-loss model: distance = 10 ^ ((rssi_at_1m - rssi) / (10 * n)).
+# Advertised TX power is the strength at the antenna; free-space loss over the
+# first meter at 2.4 GHz is ~41 dB, so expected RSSI at 1 m = tx_power - 41.
+PATH_LOSS_AT_1M = 41
+DEFAULT_RSSI_AT_1M = -59  # typical for BLE devices that don't advertise TX power
+PATH_LOSS_EXPONENT = 2.0  # free space; indoors with walls it's closer to 2.5-4
+
+def estimate_distance(rssi, tx_power):
+    """Approximate distance in meters. Rough — RSSI varies with obstacles,
+    orientation, and multipath, so treat this as an order of magnitude."""
+    if tx_power is not None:
+        rssi_at_1m = tx_power - PATH_LOSS_AT_1M
+    else:
+        rssi_at_1m = DEFAULT_RSSI_AT_1M
+    return 10 ** ((rssi_at_1m - rssi) / (10 * PATH_LOSS_EXPONENT))
+
+def format_distance(rssi, tx_power):
+    distance = estimate_distance(rssi, tx_power)
+    # * = device didn't advertise TX power, estimate uses an assumed reference
+    marker = "" if tx_power is not None else "*"
+    if distance >= 100:
+        return f">100 m{marker}"
+    if distance >= 10:
+        return f"~{distance:.0f} m{marker}"
+    return f"~{distance:.1f} m{marker}"
+
 def enable_ansi():
     # Legacy Windows consoles (cmd/conhost) ignore ANSI codes unless virtual terminal processing is switched on for the session.
     if sys.platform != "win32":
@@ -65,12 +91,57 @@ def enable_ansi():
         ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
         kernel32.SetConsoleMode(handle, mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
 
+def make_cbreak_stdin():
+    """Switch the terminal to cbreak mode so single keypresses arrive without
+    Enter. Returns a restore function, or None where it isn't needed (Windows
+    reads keys via msvcrt; non-TTY stdin has no keyboard)."""
+    if sys.platform == "win32" or not sys.stdin.isatty():
+        return None
+    import termios, tty
+    fd = sys.stdin.fileno()
+    old_attrs = termios.tcgetattr(fd)
+    tty.setcbreak(fd)
+    return lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old_attrs)
+
+async def watch_keys(state: dict):
+    """Background task: toggle state['paused'] whenever SPACE is pressed."""
+    if not sys.stdin.isatty():
+        return  # stdin is piped/redirected — no keyboard to watch
+    if sys.platform == "win32":
+        import msvcrt
+        while True:
+            while msvcrt.kbhit():
+                if msvcrt.getwch() == " ":
+                    state["paused"] = not state["paused"]
+            await asyncio.sleep(0.05)
+    else:
+        import select
+        while True:
+            while select.select([sys.stdin], [], [], 0)[0]:
+                if sys.stdin.read(1) == " ":
+                    state["paused"] = not state["paused"]
+            await asyncio.sleep(0.05)
+
 async def run_scanner(interval: float, name_filter: str | None):
     print("Starting BLE scanner — press Ctrl+C to stop...")
     await asyncio.sleep(1)  # let the message show before first clear
 
+    state = {"paused": False}
+    key_task = asyncio.create_task(watch_keys(state))  # keep a reference so it isn't GC'd
+    paused_shown = False
+
     while True:
+        if state["paused"]:
+            if not paused_shown:
+                print("\nPaused — press SPACE to resume")
+                paused_shown = True
+            await asyncio.sleep(0.1)
+            continue
+        paused_shown = False
+
         devices_dict = await BleakScanner.discover(timeout=interval, return_adv=True)
+        if state["paused"]:
+            continue  # paused during the scan window — keep the last table frozen
 
         devices = devices_dict.items()
         if name_filter:
@@ -86,14 +157,22 @@ async def run_scanner(interval: float, name_filter: str | None):
         )
 
         print(CLEAR_SCREEN, end="")
-        print("BLE Scanner — press Ctrl+C to stop\n")
+        print("BLE Scanner — SPACE to pause, Ctrl+C to stop\n")
         print(f"Found {len(sorted_devices)} device(s):")
-        print(f"{'Device Name':<30} | {'Address':<36} | {'Signal (RSSI)'}")
-        print("-" * 80)
+        print(f"{'Device Name':<30} | {'Address':<36} | {'RSSI':<8} | {'Distance'}")
+        print("-" * 90)
 
+        any_assumed = False
         for address, (device, adv_data) in sorted_devices:
             name = resolve_name(device, adv_data)
-            print(f"{name:<30} | {address:<36} | {adv_data.rssi} dBm")
+            rssi_str = f"{adv_data.rssi} dBm"
+            distance = format_distance(adv_data.rssi, adv_data.tx_power)
+            if adv_data.tx_power is None:
+                any_assumed = True
+            print(f"{name:<30} | {address:<36} | {rssi_str:<8} | {distance}")
+
+        if any_assumed:
+            print(f"\n* no TX power advertised; assumes {DEFAULT_RSSI_AT_1M} dBm at 1 m")
 
 def show_menu():
     print(CLEAR_SCREEN, end="")
@@ -112,10 +191,14 @@ def main():
 
     enable_ansi()
     show_menu()
+    restore_terminal = make_cbreak_stdin()
     try:
         asyncio.run(run_scanner(args.interval, args.filter))
     except KeyboardInterrupt:
         print("\nStopped.")
+    finally:
+        if restore_terminal:
+            restore_terminal()
 
 if __name__ == "__main__":
     main()

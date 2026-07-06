@@ -1,20 +1,25 @@
 # blu
 
 A command-line Bluetooth Low Energy (BLE) scanner for macOS and Windows.
-It continuously scans for nearby BLE devices and shows them in a live
+Continuously scans for BLE devices and shows them in a live
 table sorted by signal strength.
 
 ```
-Device Name                    | Address                              | Signal (RSSI)
---------------------------------------------------------------------------------
-John's AirPods Pro             | 1B2M2Y8A-...                         | -42 dBm
-[Samsung device]               | 5D41402A-...                         | -67 dBm
-[Vendor 0x0313]                | 7D793037-...                         | -81 dBm
+Device Name                    | Address                              | RSSI     | Distance
+------------------------------------------------------------------------------------------
+John's AirPods Pro             | 1B2M2Y8A-...                         | -42 dBm  | ~1.1 m
+[Samsung device]               | 5D41402A-...                         | -67 dBm  | ~2.5 m*
+[Vendor 0x0313]                | 7D793037-...                         | -81 dBm  | ~13 m*
 ```
 
 For unnamed devices, blu falls back through several sources to identify them:
 the advertised name, then the OS-cached name, then the manufacturer's Bluetooth
 company ID (shown as a vendor name when known, or the raw ID otherwise).
+
+Distance is a rough estimate from RSSI and the device's advertised TX power,
+using a free-space path-loss model. Walls, bodies, and device orientation all
+skew it, so treat it as an order of magnitude, not a measurement. A `*` marks
+devices that don't advertise TX power, where a typical reference is assumed.
 
 ## Install
 
@@ -48,7 +53,7 @@ blu -i 5           # 5-second scan window per refresh (default: 2)
 blu -f airpods     # only show devices whose name contains "airpods"
 ```
 
-Press `Ctrl+C` to stop.
+Press `Space` to pause/resume the live table, `Ctrl+C` to stop.
 
 Note: on macOS, addresses are per-device UUIDs assigned by CoreBluetooth, not
 real MAC addresses, and they can change between runs. The first run may ask for
