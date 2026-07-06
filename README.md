@@ -8,8 +8,13 @@ table sorted by signal strength.
 Device Name                    | Address                              | Signal (RSSI)
 --------------------------------------------------------------------------------
 Isaac's AirPods Pro            | 1B2M2Y8A-...                         | -42 dBm
-Unknown Device                 | 5D41402A-...                         | -67 dBm
+[Samsung device]               | 5D41402A-...                         | -67 dBm
+[Vendor 0x0313]                | 7D793037-...                         | -81 dBm
 ```
+
+For unnamed devices, blu falls back through several sources to identify them:
+the advertised name, then the OS-cached name, then the manufacturer's Bluetooth
+company ID (shown as a vendor name when known, or the raw ID otherwise).
 
 ## Install
 
