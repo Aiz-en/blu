@@ -1,13 +1,13 @@
 # blu
 
-A tiny command-line Bluetooth Low Energy (BLE) scanner for macOS and Windows.
-It continuously scans for nearby BLE devices and shows them in a live-updating
+A command-line Bluetooth Low Energy (BLE) scanner for macOS and Windows.
+It continuously scans for nearby BLE devices and shows them in a live
 table sorted by signal strength.
 
 ```
 Device Name                    | Address                              | Signal (RSSI)
 --------------------------------------------------------------------------------
-Isaac's AirPods Pro            | 1B2M2Y8A-...                         | -42 dBm
+John's AirPods Pro            | 1B2M2Y8A-...                         | -42 dBm
 [Samsung device]               | 5D41402A-...                         | -67 dBm
 [Vendor 0x0313]                | 7D793037-...                         | -81 dBm
 ```
