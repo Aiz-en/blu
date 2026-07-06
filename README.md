@@ -7,7 +7,7 @@ table sorted by signal strength.
 ```
 Device Name                    | Address                              | Signal (RSSI)
 --------------------------------------------------------------------------------
-John's AirPods Pro            | 1B2M2Y8A-...                         | -42 dBm
+John's AirPods Pro             | 1B2M2Y8A-...                         | -42 dBm
 [Samsung device]               | 5D41402A-...                         | -67 dBm
 [Vendor 0x0313]                | 7D793037-...                         | -81 dBm
 ```
