@@ -174,12 +174,26 @@ async def run_scanner(interval: float, name_filter: str | None):
         if any_assumed:
             print(f"\n* no TX power advertised; assumes {DEFAULT_RSSI_AT_1M} dBm at 1 m")
 
+BANNER = r"""__/\\\\\\\\\\\\\____/\\\______________/\\\________/\\\_        
+ _\/\\\/////////\\\_\/\\\_____________\/\\\_______\/\\\_       
+  _\/\\\_______\/\\\_\/\\\_____________\/\\\_______\/\\\_      
+   _\/\\\\\\\\\\\\\\__\/\\\_____________\/\\\_______\/\\\_     
+    _\/\\\/////////\\\_\/\\\_____________\/\\\_______\/\\\_    
+     _\/\\\_______\/\\\_\/\\\_____________\/\\\_______\/\\\_   
+      _\/\\\_______\/\\\_\/\\\_____________\//\\\______/\\\__  
+       _\/\\\\\\\\\\\\\/__\/\\\\\\\\\\\\\\\__\///\\\\\\\\\/___ 
+        _\/////////////____\///////////////_____\/////////_____"""
+
+# Width of the widest banner row, so the rules match the art exactly.
+BANNER_WIDTH = max(len(line) for line in BANNER.splitlines())
+
 def show_menu():
     print(CLEAR_SCREEN, end="")
-    print("=" * 40)
-    print(" BLE Scanner")
-    print("=" * 40)
+    print("=" * BANNER_WIDTH)
+    print(BANNER)
+    print("=" * BANNER_WIDTH)
     input("\nPress Enter to begin scanning...")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Continuously scan for nearby BLE devices.")
