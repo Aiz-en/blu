@@ -1,6 +1,6 @@
 # blu
 
-A command-line Bluetooth Low Energy (BLE) scanner for macOS and Windows.
+A command-line Bluetooth Low Energy (BLE) scanner for macOS, Linux, and Windows.
 Continuously scans for BLE devices and shows them in a live
 table sorted by signal strength.
 
@@ -34,6 +34,33 @@ git clone https://github.com/Aiz-en/blu.git
 ln -s "$PWD/blu/Blu.py" /opt/homebrew/bin/blu
 ```
 
+### Linux
+
+blu talks to the BlueZ Bluetooth stack over D-Bus, so make sure it's installed
+and running first:
+
+```sh
+sudo pacman -S bluez bluez-utils          # Arch
+sudo apt install bluez                     # Debian/Ubuntu
+sudo dnf install bluez                     # Fedora
+sudo systemctl enable --now bluetooth
+```
+
+Then install blu:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Aiz-en/blu/main/install.sh | bash
+```
+
+This installs uv if it's missing, clones blu to
+`~/.local/share/blu`, and adds a `blu` command to `~/.local/bin` (make sure
+that's on your PATH). To install manually instead:
+
+```sh
+git clone https://github.com/Aiz-en/blu.git
+ln -s "$PWD/blu/Blu.py" ~/.local/bin/blu
+```
+
 ### Windows
 
 Run in PowerShell:
@@ -57,5 +84,5 @@ Press `Space` to pause/resume the live table, `Ctrl+C` to stop.
 
 Note: on macOS, addresses are per-device UUIDs assigned by CoreBluetooth, not
 real MAC addresses, and they can change between runs. The first run may ask for
-permission to use Bluetooth — that's expected. On Windows, addresses are the
-devices' actual MAC addresses.
+permission to use Bluetooth — that's expected. On Windows and Linux, addresses
+are the devices' actual MAC addresses.
